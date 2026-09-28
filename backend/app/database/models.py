@@ -1,38 +1,394 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
 from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Table,
+)
+from sqlalchemy.orm import relationship
+
 from .database import Base
 
+
+# ---------------------------------------------------------
+# USER <-> ROLE FOUNDATION
+# ---------------------------------------------------------
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(30), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    candidate_profile = relationship(
+        "CandidateProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    employer_profile = relationship(
+        "EmployerUser",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------
+# COMPANY
+# ---------------------------------------------------------
+
+class Company(Base):
+    __tablename__ = "companies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    website = Column(String(500))
+    location = Column(String(200))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employers = relationship(
+        "EmployerUser",
+        back_populates="company",
+    )
+
+    jobs = relationship(
+        "Job",
+        back_populates="company",
+    )
+
+
+# ---------------------------------------------------------
+# CANDIDATE PROFILE
+# ---------------------------------------------------------
+
+class CandidateProfile(Base):
+    __tablename__ = "candidate_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+    )
+
+    phone = Column(String(30))
+    location = Column(String(200))
+    bio = Column(Text)
+    experience = Column(Text)
+    education = Column(Text)
+
+    user = relationship(
+        "User",
+        back_populates="candidate_profile",
+    )
+
+    resumes = relationship(
+        "Resume",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+    )
+
+    applications = relationship(
+        "Application",
+        back_populates="candidate",
+    )
+
+
+# ---------------------------------------------------------
+# EMPLOYER USER
+# ---------------------------------------------------------
+
+class EmployerUser(Base):
+    __tablename__ = "employer_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+    )
+
+    company_id = Column(
+        Integer,
+        ForeignKey("companies.id"),
+        nullable=False,
+    )
+
+    designation = Column(String(100))
+    role_in_company = Column(String(50))
+
+    user = relationship(
+        "User",
+        back_populates="employer_profile",
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="employers",
+    )
+
+    jobs = relationship(
+        "Job",
+        back_populates="employer",
+    )
+
+
+# ---------------------------------------------------------
+# RESUME
+# ---------------------------------------------------------
 
 class Resume(Base):
     __tablename__ = "resumes"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    original_filename = Column(String, nullable=False)
+    candidate_id = Column(
+        Integer,
+        ForeignKey("candidate_profiles.id"),
+        nullable=False,
+    )
 
-    stored_filename = Column(String, nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    stored_filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
 
-    file_path = Column(String, nullable=False)
-
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-
-    status = Column(String, default="Uploaded")
     extracted_text = Column(Text)
 
+    status = Column(
+        String(50),
+        default="Uploaded",
+    )
 
-class Candidate(Base):
-    __tablename__ = "candidates"
+    uploaded_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    candidate = relationship(
+        "CandidateProfile",
+        back_populates="resumes",
+    )
+
+
+# ---------------------------------------------------------
+# SKILLS
+# ---------------------------------------------------------
+
+class Skill(Base):
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+
+    jobs = relationship(
+        "Job",
+        secondary="job_skills",
+        back_populates="skills",
+    )
+
+
+# ---------------------------------------------------------
+# JOB
+# ---------------------------------------------------------
+
+class Job(Base):
+    __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    name = Column(String)
-    email = Column(String)
-    phone = Column(String)
+    company_id = Column(
+        Integer,
+        ForeignKey("companies.id"),
+        nullable=False,
+    )
 
-    skills = Column(String)
+    employer_id = Column(
+        Integer,
+        ForeignKey("employer_users.id"),
+        nullable=False,
+    )
 
-    education = Column(String)
+    title = Column(
+        String(200),
+        nullable=False,
+    )
 
-    experience = Column(String)
+    description = Column(Text, nullable=False)
 
-    resume_path = Column(String)
+    location = Column(String(200))
+
+    salary = Column(String(100))
+
+    experience = Column(String(100))
+
+    employment_type = Column(String(50))
+
+    status = Column(
+        String(30),
+        default="ACTIVE",
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="jobs",
+    )
+
+    employer = relationship(
+        "EmployerUser",
+        back_populates="jobs",
+    )
+
+    skills = relationship(
+        "Skill",
+        secondary="job_skills",
+        back_populates="jobs",
+    )
+
+    applications = relationship(
+        "Application",
+        back_populates="job",
+    )
+
+
+# ---------------------------------------------------------
+# JOB <-> SKILL
+# ---------------------------------------------------------
+
+job_skills = Table(
+    "job_skills",
+    Base.metadata,
+    Column(
+        "job_id",
+        ForeignKey("jobs.id"),
+        primary_key=True,
+    ),
+    Column(
+        "skill_id",
+        ForeignKey("skills.id"),
+        primary_key=True,
+    ),
+)
+
+
+# ---------------------------------------------------------
+# APPLICATION
+# ---------------------------------------------------------
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    job_id = Column(
+        Integer,
+        ForeignKey("jobs.id"),
+        nullable=False,
+    )
+
+    candidate_id = Column(
+        Integer,
+        ForeignKey("candidate_profiles.id"),
+        nullable=False,
+    )
+
+    resume_id = Column(
+        Integer,
+        ForeignKey("resumes.id"),
+    )
+
+    match_score = Column(Integer)
+
+    status = Column(
+        String(50),
+        default="APPLIED",
+    )
+
+    applied_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    job = relationship(
+        "Job",
+        back_populates="applications",
+    )
+
+    candidate = relationship(
+        "CandidateProfile",
+        back_populates="applications",
+    )
+
+
+# ---------------------------------------------------------
+# SAVED JOBS
+# ---------------------------------------------------------
+
+class SavedJob(Base):
+    __tablename__ = "saved_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    candidate_id = Column(
+        Integer,
+        ForeignKey("candidate_profiles.id"),
+        nullable=False,
+    )
+
+    job_id = Column(
+        Integer,
+        ForeignKey("jobs.id"),
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+
+# ---------------------------------------------------------
+# NOTIFICATIONS
+# ---------------------------------------------------------
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    message = Column(Text, nullable=False)
+
+    is_read = Column(
+        Boolean,
+        default=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )

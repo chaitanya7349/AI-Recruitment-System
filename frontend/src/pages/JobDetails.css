@@ -1,0 +1,261 @@
+.job-details-page {
+  min-height: 100vh;
+  background: #f7f8fc;
+  padding: 40px 24px 80px;
+}
+
+.job-details-container {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.back-button {
+  border: none;
+  background: transparent;
+  color: #4f46e5;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.job-details-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 25px;
+  align-items: start;
+}
+
+.job-details-main,
+.job-apply-card {
+  background: white;
+  border: 1px solid #e8eaf0;
+  border-radius: 18px;
+}
+
+.job-details-main {
+  padding: 35px;
+}
+
+.job-company-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.large-company-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.job-company-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.details-company {
+  margin: 7px 0;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+.details-location {
+  margin: 0;
+  color: #6b7280;
+}
+
+.job-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 30px 0;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.job-info-tags span {
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.details-section {
+  margin-top: 30px;
+}
+
+.details-section h2 {
+  margin-bottom: 14px;
+  color: #111827;
+}
+
+.details-section p {
+  color: #4b5563;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.details-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.details-skills span {
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.job-apply-card {
+  padding: 28px;
+  position: sticky;
+  top: 25px;
+}
+
+.job-apply-card h2 {
+  margin-top: 0;
+  color: #111827;
+}
+
+.job-apply-card > p {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.apply-button,
+.career-fit-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.apply-button {
+  border: none;
+  background: #4f46e5;
+  color: white;
+  margin-top: 15px;
+}
+
+.apply-button:hover {
+  background: #4338ca;
+}
+
+.career-fit-button {
+  background: white;
+  border: 1px solid #dfe3eb;
+  color: #374151;
+  margin-top: 10px;
+}
+
+.apply-card-note {
+  margin-top: 25px;
+  padding: 17px;
+  background: #f5f3ff;
+  border-radius: 12px;
+}
+
+.apply-card-note strong {
+  color: #4338ca;
+}
+
+.apply-card-note p {
+  color: #5b21b6;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.job-details-state {
+  min-height: 100vh;
+  background: #f7f8fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  text-align: center;
+}
+
+.job-details-state h2 {
+  color: #111827;
+}
+
+.job-details-state button {
+  margin-top: 15px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.loader {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 850px) {
+  .job-details-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .job-apply-card {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .job-details-page {
+    padding: 25px 15px 50px;
+  }
+
+  .job-details-main {
+    padding: 22px;
+  }
+
+  .job-company-header {
+    align-items: flex-start;
+  }
+
+  .job-company-header h1 {
+    font-size: 26px;
+  }
+
+  .large-company-logo {
+    width: 55px;
+    height: 55px;
+    font-size: 23px;
+  }
+}

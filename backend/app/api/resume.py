@@ -3,10 +3,9 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import Resume, Candidate
+from app.database.models import Resume, CandidateProfile, User
 from app.services.resume_parser import extract_text
 from app.services.ai_parser import parse_resume
-from app.schemas.job import JobDescription
 from app.services.job_matcher import match_resume
 from app.services.resume_score import calculate_score
 
@@ -21,76 +20,153 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+# ---------------------------------------------------------
+# UPLOAD RESUME
+# ---------------------------------------------------------
+
 @router.post("/upload-resume")
 async def upload_resume(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
 
-    # Get file extension
     extension = os.path.splitext(file.filename)[1]
 
-    # Generate unique filename
     unique_filename = f"{uuid.uuid4()}{extension}"
 
-    # File path
-    file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+    file_path = os.path.join(
+        UPLOAD_FOLDER,
+        unique_filename
+    )
 
     # Save uploaded file
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract resume text
+    # Extract text
     resume_text = extract_text(file_path)
 
-    # Parse candidate details
+    # Parse candidate information
     candidate = parse_resume(resume_text)
 
-    # Check duplicate email
-    existing = db.query(Resume).filter(
-        Resume.extracted_text.contains(candidate["email"])
-    ).first()
+    email = candidate.get("email")
 
-    if existing:
-        # Remove duplicate uploaded file
+    if not email:
         os.remove(file_path)
 
         return {
-            "message": "Resume already uploaded."
+            "error": "Could not extract candidate email from resume."
         }
 
-    # Save resume
+    # -----------------------------------------------------
+    # CHECK EXISTING USER
+    # -----------------------------------------------------
+
+    existing_user = db.query(User).filter(
+        User.email == email
+    ).first()
+
+    if existing_user:
+
+        existing_profile = db.query(
+            CandidateProfile
+        ).filter(
+            CandidateProfile.user_id == existing_user.id
+        ).first()
+
+        if existing_profile:
+
+            existing_resume = db.query(
+                Resume
+            ).filter(
+                Resume.candidate_id == existing_profile.id
+            ).first()
+
+            if existing_resume:
+                os.remove(file_path)
+
+                return {
+                    "message": "Resume already uploaded.",
+                    "resume_id": existing_resume.id
+                }
+
+            candidate_profile = existing_profile
+
+        else:
+
+            candidate_profile = CandidateProfile(
+                user_id=existing_user.id,
+                phone=candidate.get("phone"),
+                location=None,
+                bio=None,
+                experience=str(
+                    candidate.get("experience", "")
+                ),
+                education=str(
+                    candidate.get("education", "")
+                )
+            )
+
+            db.add(candidate_profile)
+            db.flush()
+
+    else:
+
+        # -------------------------------------------------
+        # CREATE USER
+        # -------------------------------------------------
+
+        user = User(
+            name=candidate.get(
+                "name",
+                "Unknown Candidate"
+            ),
+            email=email,
+            password_hash="TEMPORARY",
+            role="JOB_SEEKER"
+        )
+
+        db.add(user)
+        db.flush()
+
+        # -------------------------------------------------
+        # CREATE CANDIDATE PROFILE
+        # -------------------------------------------------
+
+        candidate_profile = CandidateProfile(
+            user_id=user.id,
+            phone=candidate.get("phone"),
+            location=None,
+            bio=None,
+            experience=str(
+                candidate.get("experience", "")
+            ),
+            education=str(
+                candidate.get("education", "")
+            )
+        )
+
+        db.add(candidate_profile)
+        db.flush()
+
+    # -----------------------------------------------------
+    # SAVE RESUME
+    # -----------------------------------------------------
+
     resume = Resume(
+        candidate_id=candidate_profile.id,
         original_filename=file.filename,
         stored_filename=unique_filename,
         file_path=file_path,
-        extracted_text=resume_text
+        extracted_text=resume_text,
+        status="Uploaded"
     )
 
     db.add(resume)
-    db.flush()
 
-    # Save candidate
-    candidate_record = Candidate(
-        name=candidate["name"],
-        email=candidate["email"],
-        phone=candidate["phone"],
-        skills=", ".join(candidate["skills"])
-        if isinstance(candidate["skills"], list)
-        else candidate["skills"],
-        education=candidate["education"],
-        experience=candidate["experience"],
-        resume_path=file_path
-    )
-
-    db.add(candidate_record)
-
-    # Save both Resume and Candidate
     db.commit()
 
-    # Refresh database records
     db.refresh(resume)
-    db.refresh(candidate_record)
 
     return {
         "message": "Resume uploaded successfully",
@@ -101,14 +177,19 @@ async def upload_resume(
     }
 
 
+# ---------------------------------------------------------
+# MATCH RESUME
+# ---------------------------------------------------------
+
 @router.post("/match-resume")
 def match_resume_api(
-    job: JobDescription,
+    resume_id: int,
+    skills: list[str],
     db: Session = Depends(get_db)
 ):
 
     resume = db.query(Resume).filter(
-        Resume.id == job.resume_id
+        Resume.id == resume_id
     ).first()
 
     if not resume:
@@ -116,23 +197,32 @@ def match_resume_api(
             "error": "Resume not found"
         }
 
-    candidate = parse_resume(resume.extracted_text)
+    candidate = parse_resume(
+        resume.extracted_text
+    )
 
     score = calculate_score(candidate)
 
     result = match_resume(
         candidate,
-        job.skills
+        skills
     )
 
     return {
         "candidate": candidate,
+        "score": score,
         "result": result
     }
 
 
+# ---------------------------------------------------------
+# GET CANDIDATES
+# ---------------------------------------------------------
+
 @router.get("/candidates")
-def get_candidates(db: Session = Depends(get_db)):
+def get_candidates(
+    db: Session = Depends(get_db)
+):
 
     resumes = db.query(Resume).all()
 
@@ -140,12 +230,15 @@ def get_candidates(db: Session = Depends(get_db)):
 
     for resume in resumes:
 
-        candidate = parse_resume(resume.extracted_text)
+        candidate = parse_resume(
+            resume.extracted_text
+        )
 
         score = calculate_score(candidate)
 
         candidates.append({
             "resume_id": resume.id,
+            "candidate_id": resume.candidate_id,
             "name": candidate["name"],
             "email": candidate["email"],
             "phone": candidate["phone"],
@@ -162,8 +255,14 @@ def get_candidates(db: Session = Depends(get_db)):
     }
 
 
+# ---------------------------------------------------------
+# CANDIDATE RANKING
+# ---------------------------------------------------------
+
 @router.get("/candidate-ranking")
-def candidate_ranking(db: Session = Depends(get_db)):
+def candidate_ranking(
+    db: Session = Depends(get_db)
+):
 
     resumes = db.query(Resume).all()
 
@@ -171,11 +270,15 @@ def candidate_ranking(db: Session = Depends(get_db)):
 
     for resume in resumes:
 
-        candidate = parse_resume(resume.extracted_text)
+        candidate = parse_resume(
+            resume.extracted_text
+        )
 
         score = calculate_score(candidate)
 
         ranking.append({
+            "resume_id": resume.id,
+            "candidate_id": resume.candidate_id,
             "name": candidate["name"],
             "email": candidate["email"],
             "score": score
@@ -187,14 +290,21 @@ def candidate_ranking(db: Session = Depends(get_db)):
         reverse=True
     )
 
-    for i, candidate in enumerate(ranking):
-        candidate["rank"] = i + 1
+    for index, candidate in enumerate(
+        ranking,
+        start=1
+    ):
+        candidate["rank"] = index
 
     return {
         "total_candidates": len(ranking),
         "ranking": ranking
     }
 
+
+# ---------------------------------------------------------
+# DOWNLOAD RESUME
+# ---------------------------------------------------------
 
 @router.get("/download-resume/{resume_id}")
 def download_resume(
@@ -209,6 +319,11 @@ def download_resume(
     if not resume:
         return {
             "error": "Resume not found"
+        }
+
+    if not os.path.exists(resume.file_path):
+        return {
+            "error": "Resume file not found on server"
         }
 
     return FileResponse(

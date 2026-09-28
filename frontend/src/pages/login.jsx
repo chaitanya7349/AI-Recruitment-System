@@ -1,108 +1,175 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
-
+import "./Login.css";
 function Login() {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
 
-  const login = async () => {
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const login = async (event) => {
+    event.preventDefault();
+
+    setMessage("");
+
+    if (!email || !password) {
+      setMessage("Please enter your email and password.");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       const response = await API.post("/login", {
-        username,
+        email,
         password,
       });
 
+      const {
+        access_token,
+        user,
+      } = response.data;
+
+      // Store authentication token
       localStorage.setItem(
         "token",
-        response.data.access_token
+        access_token
       );
 
-      navigate("/dashboard");
+      // Store logged-in user information
+      localStorage.setItem(
+        "user",
+        JSON.stringify(user)
+      );
+
+      // Redirect according to the user's role
+      if (user.role === "EMPLOYER_USER") {
+        navigate("/employer");
+      } else if (user.role === "ADMIN") {
+        navigate("/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+
     } catch (error) {
-      setMessage("Invalid Username or Password");
+      console.error("Login error:", error);
+
+      const backendMessage =
+        error.response?.data?.detail;
+
+      setMessage(
+        backendMessage ||
+        "Unable to login. Please check your credentials."
+      );
+
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f4f6f9",
-      }}
-    >
-      <div
-        style={{
-          width: "400px",
-          background: "white",
-          padding: "40px",
-          borderRadius: "10px",
-          boxShadow: "0 5px 20px rgba(46, 41, 41, 0.15)",
-        }}
-      >
-        <h1 style={{ textAlign: "center" }}>
-          Recruiter   Login
+    <div className="login-page">
+
+      <div className="login-card">
+
+        <div className="login-brand">
+          NEXORA
+        </div>
+
+        <h1>
+          Welcome back
         </h1>
 
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) =>
-            setUsername(e.target.value)
-          }
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "20px",
-          }}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "15px",
-          }}
-        />
-
-        <button
-          onClick={login}
-          style={{
-            width: "100%",
-            marginTop: "20px",
-            padding: "12px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            borderRadius: "5px",
-          }}
-        >
-          Login
-        </button>
-
-        <p
-          style={{
-            color: "red",
-            textAlign: "center",
-          }}
-        >
-          {message}
+        <p className="login-subtitle">
+          Sign in to continue to your career and hiring platform.
         </p>
+
+        <form onSubmit={login}>
+
+          <div className="login-field">
+
+            <label>
+              Email address
+            </label>
+
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              autoComplete="email"
+            />
+
+          </div>
+
+          <div className="login-field">
+
+            <label>
+              Password
+            </label>
+
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              autoComplete="current-password"
+            />
+
+          </div>
+
+          {message && (
+            <div className="login-error">
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+        </form>
+
+        <div className="login-divider">
+          <span>OR</span>
+        </div>
+
+        <div className="login-links">
+
+          <button
+            type="button"
+            onClick={() => navigate("/register")}
+          >
+            Create a Job Seeker account
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/employer")}
+          >
+            I'm an Employer
+          </button>
+
+        </div>
+
+        <p className="login-footer">
+          AI-powered career and hiring intelligence
+        </p>
+
       </div>
+
     </div>
   );
 }
