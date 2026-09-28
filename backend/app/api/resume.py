@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import Resume
+from app.database.models import Resume, Candidate
 from app.services.resume_parser import extract_text
 from app.services.ai_parser import parse_resume
 from app.schemas.job import JobDescription
@@ -13,6 +13,7 @@ from app.services.resume_score import calculate_score
 import os
 import shutil
 import uuid
+
 
 router = APIRouter()
 
@@ -67,8 +68,29 @@ async def upload_resume(
     )
 
     db.add(resume)
+    db.flush()
+
+    # Save candidate
+    candidate_record = Candidate(
+        name=candidate["name"],
+        email=candidate["email"],
+        phone=candidate["phone"],
+        skills=", ".join(candidate["skills"])
+        if isinstance(candidate["skills"], list)
+        else candidate["skills"],
+        education=candidate["education"],
+        experience=candidate["experience"],
+        resume_path=file_path
+    )
+
+    db.add(candidate_record)
+
+    # Save both Resume and Candidate
     db.commit()
+
+    # Refresh database records
     db.refresh(resume)
+    db.refresh(candidate_record)
 
     return {
         "message": "Resume uploaded successfully",
