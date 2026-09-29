@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     Text,
     Table,
+    UniqueConstraint,
 )
 
 from sqlalchemy.orm import relationship
@@ -382,6 +383,14 @@ job_skills = Table(
 class Application(Base):
     __tablename__ = "applications"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "job_id",
+            "candidate_id",
+            name="uq_application_job_candidate",
+        ),
+    )
+
     id = Column(
         Integer,
         primary_key=True,
@@ -492,6 +501,14 @@ class ApplicationStatusHistory(Base):
 
 class SavedJob(Base):
     __tablename__ = "saved_jobs"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "candidate_id",
+            "job_id",
+            name="uq_saved_job_candidate_job",
+        ),
+    )
 
     id = Column(
         Integer,

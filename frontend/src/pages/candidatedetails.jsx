@@ -13,7 +13,7 @@ function CandidateDetails() {
 
   const loadCandidate = async () => {
     try {
-      const response = await API.get("/candidates");
+      const response = await API.get(`/employer/candidates/${id}`);
 
       const found = response.data.candidates.find(
         (c) => c.resume_id === Number(id)

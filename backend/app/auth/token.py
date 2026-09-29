@@ -1,54 +1,60 @@
+import os
 from datetime import datetime, timedelta, timezone
 
+from dotenv import load_dotenv
 from jose import JWTError, jwt
 
+load_dotenv()
 
-SECRET_KEY = "ai_recruitment_secret_key_change_later"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
+)
 
-ALGORITHM = "HS256"
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY is not configured.")
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+if len(SECRET_KEY) < 32:
+    raise RuntimeError(
+        "JWT_SECRET_KEY must contain at least 32 characters."
+    )
 
 
 def create_access_token(data: dict) -> str:
-    """
-    Create a JWT access token.
-
-    The data dictionary normally contains the user's ID
-    and role.
-    """
-
     to_encode = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
-    to_encode.update({
-        "exp": expire
-    })
+    to_encode.update(
+        {
+            "iat": now,
+            "exp": expire,
+        }
+    )
 
     return jwt.encode(
         to_encode,
         SECRET_KEY,
-        algorithm=ALGORITHM
+        algorithm=ALGORITHM,
     )
 
 
 def verify_access_token(token: str):
-    """
-    Decode and verify a JWT token.
-
-    Returns the payload if valid.
-    Returns None if the token is invalid or expired.
-    """
-
     try:
         payload = jwt.decode(
             token,
             SECRET_KEY,
-            algorithms=[ALGORITHM]
+            algorithms=[ALGORITHM],
         )
+
+        user_id = payload.get("sub")
+
+        if not user_id:
+            return None
 
         return payload
 

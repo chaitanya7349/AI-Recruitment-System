@@ -25,7 +25,7 @@ export default function SkillGap() {
 
   const loadSkillGap = async () => {
     try {
-      const response = await API.get(`/career-fit/${jobId}/skill-gap`);
+      const response = await API.get(`/candidate/jobs/${jobId}/fit`);
       setData(response.data);
     } catch (err) {
       setError(

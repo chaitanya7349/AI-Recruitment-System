@@ -12,7 +12,7 @@ function Ranking() {
   try {
     const skills = JSON.parse(localStorage.getItem("jobSkills")) || [];
 
-    const response = await API.post("/rank-candidates", {
+    const response = await API.post("/employer/rank-candidates", {
       skills: skills,
     });
 

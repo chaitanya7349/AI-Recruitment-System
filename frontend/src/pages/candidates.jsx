@@ -13,7 +13,7 @@ function Candidates() {
 
   const loadCandidates = async () => {
     try {
-      const res = await API.get("/candidates");
+      const res = await API.get("/employer/candidates");
       setCandidates(res.data.candidates);
     } catch (err) {
       console.log(err);

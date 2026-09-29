@@ -19,7 +19,7 @@ function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const response = await API.get("/candidates");
+      const response = await API.get("/employer/candidates");
 
       const candidates = response.data.candidates || [];
 

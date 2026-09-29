@@ -23,7 +23,7 @@ function CareerFit() {
 
       try {
         const response = await API.get(
-          `/career-fit/${jobId}`
+          `/candidate/jobs/${jobId}/fit`
         );
 
         setResult(response.data);

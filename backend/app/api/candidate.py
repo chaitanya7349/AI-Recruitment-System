@@ -1,89 +1,32 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import require_candidate
+from app.auth.security import hash_password
 from app.database.database import get_db
 from app.database.models import (
-    User,
-    CandidateProfile,
-    Job,
-    Resume,
+    EmployerUser,
     Application,
     ApplicationStatusHistory,
+    CandidateProfile,
+    Job,
     NotificationItem,
+    Resume,
+    User,
 )
-
 from app.schemas.candidate import (
-    CandidateRegister,
-    CandidateProfileCreate,
     ApplicationCreate,
+    CandidateProfileCreate,
+    CandidateRegister,
 )
-
-from app.auth.security import hash_password
-from app.auth.token import verify_access_token
-
 
 router = APIRouter(
     prefix="/candidate",
     tags=["Candidate"],
 )
 
-security = HTTPBearer()
-
-
-# ============================================================
-# GET CURRENT CANDIDATE
-# ============================================================
-
-def get_current_candidate(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
-):
-    payload = verify_access_token(
-        credentials.credentials
-    )
-
-    if not payload:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token",
-        )
-
-    user_id = payload.get("sub")
-    role = payload.get("role")
-
-    if not user_id:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication token",
-        )
-
-    if role != "JOB_SEEKER":
-        raise HTTPException(
-            status_code=403,
-            detail="Candidate access required",
-        )
-
-    candidate = (
-        db.query(CandidateProfile)
-        .filter(
-            CandidateProfile.user_id == int(user_id)
-        )
-        .first()
-    )
-
-    if not candidate:
-        raise HTTPException(
-            status_code=404,
-            detail="Candidate profile not found",
-        )
-
-    return candidate
-
-
-# ============================================================
-# CANDIDATE REGISTRATION
-# ============================================================
 
 @router.post("/register")
 def register_candidate(
@@ -113,7 +56,7 @@ def register_candidate(
     db.flush()
 
     candidate = CandidateProfile(
-        user_id=user.id
+        user_id=user.id,
     )
 
     db.add(candidate)
@@ -122,34 +65,33 @@ def register_candidate(
 
     return {
         "message": "Candidate registered successfully",
-        "user_id": user.id,
         "candidate_id": candidate.id,
     }
 
 
-# ============================================================
-# GET PROFILE
-# ============================================================
-
 @router.get("/profile")
-def get_profile(
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
+def get_candidate_profile(
+    candidate_user: User = Depends(require_candidate),
     db: Session = Depends(get_db),
 ):
-    user = (
-        db.query(User)
+    candidate = (
+        db.query(CandidateProfile)
         .filter(
-            User.id == candidate.user_id
+            CandidateProfile.user_id == candidate_user.id
         )
         .first()
     )
 
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate profile not found",
+        )
+
     return {
         "id": candidate.id,
-        "name": user.name if user else "",
-        "email": user.email if user else "",
+        "name": candidate_user.name,
+        "email": candidate_user.email,
         "phone": candidate.phone,
         "location": candidate.location,
         "bio": candidate.bio,
@@ -158,71 +100,107 @@ def get_profile(
     }
 
 
-# ============================================================
-# UPDATE PROFILE
-# ============================================================
-
 @router.put("/profile")
-def update_profile(
+def update_candidate_profile(
     data: CandidateProfileCreate,
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
+    candidate_user: User = Depends(require_candidate),
     db: Session = Depends(get_db),
 ):
-    candidate.phone = data.phone
-    candidate.location = data.location
-    candidate.bio = data.bio
-    candidate.experience = data.experience
-    candidate.education = data.education
+    candidate = (
+        db.query(CandidateProfile)
+        .filter(
+            CandidateProfile.user_id == candidate_user.id
+        )
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate profile not found",
+        )
+
+    if data.phone is not None:
+        candidate.phone = data.phone
+
+    if data.location is not None:
+        candidate.location = data.location
+
+    if data.bio is not None:
+        candidate.bio = data.bio
+
+    if data.experience is not None:
+        candidate.experience = data.experience
+
+    if data.education is not None:
+        candidate.education = data.education
 
     db.commit()
+    db.refresh(candidate)
 
     return {
-        "message": "Candidate profile updated successfully"
+        "message": "Candidate profile updated successfully",
+        "profile": {
+            "phone": candidate.phone,
+            "location": candidate.location,
+            "bio": candidate.bio,
+            "experience": candidate.experience,
+            "education": candidate.education,
+        },
     }
 
-
-# ============================================================
-# APPLY FOR JOB
-# ============================================================
 
 @router.post("/apply")
 def apply_for_job(
     data: ApplicationCreate,
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
+    candidate_user: User = Depends(require_candidate),
     db: Session = Depends(get_db),
 ):
+    candidate = (
+        db.query(CandidateProfile)
+        .filter(
+            CandidateProfile.user_id == candidate_user.id
+        )
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate profile not found",
+        )
+
     job = (
         db.query(Job)
-        .filter(
-            Job.id == data.job_id,
-            Job.status == "ACTIVE",
-        )
+        .filter(Job.id == data.job_id)
         .first()
     )
 
     if not job:
         raise HTTPException(
             status_code=404,
-            detail="Job not found or no longer active",
+            detail="Job not found",
+        )
+
+    if job.status != "ACTIVE":
+        raise HTTPException(
+            status_code=400,
+            detail="This job is no longer accepting applications",
         )
 
     existing_application = (
         db.query(Application)
         .filter(
-            Application.job_id == data.job_id,
             Application.candidate_id == candidate.id,
+            Application.job_id == job.id,
         )
         .first()
     )
 
     if existing_application:
         raise HTTPException(
-            status_code=400,
-            detail="You have already applied for this job",
+            status_code=409,
+            detail="You have already applied to this job",
         )
 
     resume = None
@@ -244,8 +222,8 @@ def apply_for_job(
             )
 
     application = Application(
-        job_id=job.id,
         candidate_id=candidate.id,
+        job_id=job.id,
         resume_id=resume.id if resume else None,
         status="APPLIED",
     )
@@ -253,43 +231,44 @@ def apply_for_job(
     db.add(application)
     db.flush()
 
-    # Notify employer users belonging to the job's company.
-    employer_users = (
-        db.query(User)
-        .filter(
-            User.role == "EMPLOYER_USER",
-            User.company_id == job.company_id,
-        )
-        .all()
-    )
-
-    for employer_user in employer_users:
-        db.add(
-            NotificationItem(
-                user_id=employer_user.id,
-                application_id=application.id,
-                title="New candidate application",
-                message=(
-                    f"{candidate_user.name} applied for "
-                    f"{job.title}."
-                ),
-                notification_type="APPLICATION",
-            )
-        )
-
-    # --------------------------------------------------------
-    # FIRST APPLICATION HISTORY EVENT
-    # --------------------------------------------------------
-
     history = ApplicationStatusHistory(
         application_id=application.id,
         old_status=None,
         new_status="APPLIED",
         feedback="Application submitted successfully.",
-        changed_by_user_id=candidate.user_id,
+        changed_by_user_id=candidate_user.id,
+        changed_at=datetime.utcnow(),
     )
 
     db.add(history)
+
+    employer_users = (
+        db.query(User)
+        .join(
+            EmployerUser,
+            EmployerUser.user_id == User.id,
+        )
+        .filter(
+            User.role == "EMPLOYER_USER",
+            EmployerUser.company_id == job.company_id,
+        )
+        .all()
+    )
+
+    for employer_user in employer_users:
+        notification = NotificationItem(
+            user_id=employer_user.id,
+            application_id=application.id,
+            title="New candidate application",
+            message=(
+                f"{candidate_user.name} applied for "
+                f"{job.title}."
+            ),
+            notification_type="APPLICATION",
+            is_read=False,
+        )
+
+        db.add(notification)
 
     db.commit()
     db.refresh(application)
@@ -298,82 +277,160 @@ def apply_for_job(
         "message": "Application submitted successfully",
         "application_id": application.id,
         "job_id": job.id,
-        "job_title": job.title,
         "status": application.status,
     }
 
 
-# ============================================================
-# GET MY APPLICATIONS
-# ============================================================
-
 @router.get("/applications")
-def get_my_applications(
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
+def get_candidate_applications(
+    candidate_user: User = Depends(require_candidate),
     db: Session = Depends(get_db),
 ):
+    candidate = (
+        db.query(CandidateProfile)
+        .filter(
+            CandidateProfile.user_id == candidate_user.id
+        )
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate profile not found",
+        )
+
     applications = (
         db.query(Application)
         .filter(
             Application.candidate_id == candidate.id
         )
-        .order_by(
-            Application.applied_at.desc()
-        )
+        .order_by(Application.applied_at.desc())
         .all()
     )
 
-    results = []
+    result = []
 
     for application in applications:
-
-        history = (
-            db.query(ApplicationStatusHistory)
-            .filter(
-                ApplicationStatusHistory.application_id
-                == application.id
-            )
-            .order_by(
-                ApplicationStatusHistory.changed_at.asc()
-            )
-            .all()
+        job = (
+            db.query(Job)
+            .filter(Job.id == application.job_id)
+            .first()
         )
 
-        history_items = []
+        history = []
 
-        for event in history:
-            history_items.append(
+        for item in application.status_history:
+            changed_by = item.changed_by
+
+            history.append(
                 {
-                    "id": event.id,
-                    "old_status": event.old_status,
-                    "new_status": event.new_status,
-                    "feedback": event.feedback,
-                    "changed_at": event.changed_at,
+                    "id": item.id,
+                    "old_status": item.old_status,
+                    "new_status": item.new_status,
+                    "feedback": item.feedback,
+                    "changed_at": item.changed_at,
                     "changed_by": (
-                        event.changed_by.name
-                        if event.changed_by
+                        {
+                            "id": changed_by.id,
+                            "name": changed_by.name,
+                            "role": changed_by.role,
+                        }
+                        if changed_by
                         else None
                     ),
                 }
             )
 
-        results.append(
+        result.append(
             {
                 "id": application.id,
                 "job_id": application.job_id,
-                "job_title": application.job.title,
-                "company_name": application.job.company.name,
-                "location": application.job.location,
+                "job_title": job.title if job else None,
+                "company_name": (
+                    job.company.name
+                    if job and job.company
+                    else None
+                ),
+                "location": (
+                    job.location
+                    if job
+                    else None
+                ),
                 "status": application.status,
                 "match_score": application.match_score,
                 "applied_at": application.applied_at,
-                "status_history": history_items,
+                "status_history": history,
             }
         )
 
+    return result
+
+
+@router.get("/jobs/{job_id}/fit")
+def get_job_fit(
+    job_id: int,
+    candidate_user: User = Depends(require_candidate),
+    db: Session = Depends(get_db),
+):
+    from app.services.career_fit import calculate_career_fit
+
+    candidate = (
+        db.query(CandidateProfile)
+        .filter(CandidateProfile.user_id == candidate_user.id)
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate profile not found",
+        )
+
+    job = (
+        db.query(Job)
+        .filter(Job.id == job_id)
+        .first()
+    )
+
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found",
+        )
+
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.candidate_id == candidate.id,
+            Resume.extracted_text.isnot(None),
+        )
+        .order_by(Resume.uploaded_at.desc())
+        .first()
+    )
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="No processed resume found. Upload a resume first.",
+        )
+
+    required_skills = [
+        skill.name
+        for skill in job.skills
+        if skill.name
+    ]
+
+    result = calculate_career_fit(
+        resume_text=resume.extracted_text or "",
+        job_title=job.title or "",
+        job_description=job.description or "",
+        required_skills=required_skills,
+    )
+
     return {
-        "total": len(results),
-        "applications": results,
+        "job_id": job.id,
+        "job_title": job.title,
+        "resume_id": resume.id,
+        "fit": result,
     }

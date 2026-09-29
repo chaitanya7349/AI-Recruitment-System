@@ -13,6 +13,7 @@ from app.api.job import router as job_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.login import router as login_router
 from app.api.employer import router as employer_router
+from app.api.company import router as company_router
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="AI Recruitment System",
@@ -39,6 +40,7 @@ app.include_router(resume_router)
 app.include_router(job_router)
 app.include_router(login_router)
 app.include_router(employer_router)
+app.include_router(company_router)
 Base.metadata.create_all(bind=engine)
 
 @app.get("/")

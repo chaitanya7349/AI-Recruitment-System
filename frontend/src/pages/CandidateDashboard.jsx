@@ -726,6 +726,17 @@ function CandidateDashboard() {
                     >
                       View Career Fit
                     </button>
+
+                    <button
+                      className="secondary-application-button"
+                      onClick={() =>
+                        navigate(
+                          `/skill-gap/${application.job_id}`
+                        )
+                      }
+                    >
+                      View Skill Gap
+                    </button>
                   </div>
                 </article>
               );

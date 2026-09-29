@@ -179,7 +179,7 @@ def get_career_fit(
     resume = (
         db.query(Resume)
         .filter(Resume.candidate_id == candidate.id)
-        .order_by(Resume.created_at.desc())
+        .order_by(Resume.uploaded_at.desc())
         .first()
     )
 
@@ -194,9 +194,17 @@ def get_career_fit(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    required_skills = [
+        skill.name
+        for skill in job.skills
+        if skill.name
+    ]
+
     result = calculate_career_fit(
         resume_text=resume.extracted_text or "",
-        job=job,
+        job_title=job.title or "",
+        job_description=job.description or "",
+        required_skills=required_skills,
     )
 
     return result
@@ -211,7 +219,7 @@ def get_skill_gap(
     resume = (
         db.query(Resume)
         .filter(Resume.candidate_id == candidate.id)
-        .order_by(Resume.created_at.desc())
+        .order_by(Resume.uploaded_at.desc())
         .first()
     )
 
@@ -229,9 +237,17 @@ def get_skill_gap(
             detail="Job not found",
         )
 
+    required_skills = [
+        skill.name
+        for skill in job.skills
+        if skill.name
+    ]
+
     fit = calculate_career_fit(
         resume_text=resume.extracted_text or "",
-        job=job,
+        job_title=job.title or "",
+        job_description=job.description or "",
+        required_skills=required_skills,
     )
 
     missing_skills = fit.get("missing_skills", [])

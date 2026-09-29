@@ -109,6 +109,15 @@ function Layout() {
           />
 
           <Route
+            path="/skill-gap/:jobId"
+            element={
+              <ProtectedRoute>
+                <SkillGap />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/employer"
             element={<EmployerDashboard />}
           />
@@ -132,8 +141,22 @@ function Layout() {
             element={<CandidateDashboard />}
           />
 
-          <Route path="/dashboard" element={<AdminDashboard />} />
-            <Route path="/notifications" element={<Notifications />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+            <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/upload-resume"

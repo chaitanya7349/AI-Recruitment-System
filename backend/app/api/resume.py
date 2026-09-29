@@ -1,234 +1,251 @@
-from fastapi import APIRouter, UploadFile, File, Depends
-from fastapi.responses import FileResponse
+import uuid
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.auth.token import verify_access_token
 from app.database.database import get_db
-from app.database.models import Resume, CandidateProfile, User
+from app.database.models import CandidateProfile, Resume, User
 from app.services.resume_parser import extract_text
 from app.services.ai_parser import parse_resume
-from app.services.job_matcher import match_resume
-from app.services.resume_score import calculate_score
-
-import os
-import shutil
-import uuid
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    HTTPException,
-    UploadFile,
-)
-from fastapi.security import (
-    HTTPBearer,
-    HTTPAuthorizationCredentials,
-)
-from sqlalchemy.orm import Session
-
-from app.database.database import get_db
-from app.database.models import (
-    User,
-    CandidateProfile,
-    Resume,
-)
-from app.auth.token import verify_access_token
-from app.services.resume_parser import extract_text
 
 
-router = APIRouter(
-    tags=["Resume"]
-)
+router = APIRouter(tags=["Resume"])
 
 security = HTTPBearer()
 
-UPLOAD_FOLDER = "uploads/resumes"
+UPLOAD_DIR = Path("uploads/resumes")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
-)
+MAX_FILE_SIZE = 5 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {
+    ".pdf": "application/pdf",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
 
 
 def get_current_candidate(
-    credentials: HTTPAuthorizationCredentials = Depends(
-        security
-    ),
-    db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
-    payload = verify_access_token(
-        credentials.credentials
-    )
+    payload = verify_access_token(credentials.credentials)
 
     if not payload:
         raise HTTPException(
             status_code=401,
-            detail="Invalid or expired token"
+            detail="Invalid or expired token",
         )
 
     user_id = payload.get("sub")
-    role = payload.get("role")
 
     if not user_id:
         raise HTTPException(
             status_code=401,
-            detail="Invalid authentication token"
+            detail="Invalid authentication token",
         )
 
-    if role != "JOB_SEEKER":
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid user identity",
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user or user.role != "JOB_SEEKER":
         raise HTTPException(
             status_code=403,
-            detail="Candidate access required"
+            detail="Candidate access required",
         )
 
     candidate = (
         db.query(CandidateProfile)
-        .filter(
-            CandidateProfile.user_id == int(user_id)
-        )
+        .filter(CandidateProfile.user_id == user.id)
         .first()
     )
 
     if not candidate:
         raise HTTPException(
             status_code=404,
-            detail="Candidate profile not found"
+            detail="Candidate profile not found",
         )
 
     return candidate
 
 
-# ---------------------------------------------------------
-# UPLOAD RESUME
-# ---------------------------------------------------------
+def validate_extension(filename: str) -> str:
+    if not filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Filename is required",
+        )
+
+    extension = Path(filename).suffix.lower()
+
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF and DOCX resumes are allowed",
+        )
+
+    return extension
+
 
 @router.post("/upload-resume")
 async def upload_resume(
     file: UploadFile = File(...),
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
-    db: Session = Depends(get_db)
+    candidate: CandidateProfile = Depends(get_current_candidate),
+    db: Session = Depends(get_db),
 ):
-    if not file.filename:
+    extension = validate_extension(file.filename or "")
+
+    content_type = file.content_type or ""
+    expected_content_type = ALLOWED_EXTENSIONS[extension]
+
+    if content_type != expected_content_type:
         raise HTTPException(
             status_code=400,
-            detail="No file selected"
+            detail="File content type does not match the file extension",
         )
 
-    extension = os.path.splitext(
-        file.filename
-    )[1].lower()
+    content = await file.read()
 
-    allowed_extensions = {
-        ".pdf",
-        ".docx",
-    }
-
-    if extension not in allowed_extensions:
+    if not content:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF and DOCX files are supported"
+            detail="Uploaded file is empty",
         )
 
-    unique_filename = (
-        f"{uuid.uuid4()}{extension}"
-    )
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail="Resume file is too large. Maximum size is 5 MB.",
+        )
 
-    file_path = os.path.join(
-        UPLOAD_FOLDER,
-        unique_filename
-    )
+    if extension == ".pdf" and not content.startswith(b"%PDF"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid PDF file",
+        )
+
+    if extension == ".docx" and not content.startswith(b"PK"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid DOCX file",
+        )
+
+    safe_filename = f"{uuid.uuid4().hex}{extension}"
+    file_path = UPLOAD_DIR / safe_filename
 
     try:
-        with open(
-            file_path,
-            "wb"
-        ) as buffer:
-            shutil.copyfileobj(
-                file.file,
-                buffer
-            )
+        file_path.write_bytes(content)
 
-        resume_text = extract_text(
-            file_path
-        )
+        extracted_text = extract_text(str(file_path))
 
-        if not resume_text:
-            os.remove(file_path)
+        if not extracted_text or not extracted_text.strip():
+            file_path.unlink(missing_ok=True)
 
             raise HTTPException(
                 status_code=400,
-                detail="Could not extract text from resume"
+                detail="Could not extract text from the resume",
             )
 
         resume = Resume(
             candidate_id=candidate.id,
-            original_filename=file.filename,
-            stored_filename=unique_filename,
-            file_path=file_path,
-            extracted_text=resume_text,
-            status="PARSED",
+            original_filename=file.filename or safe_filename,
+            stored_filename=safe_filename,
+            file_path=str(file_path),
+            extracted_text=extracted_text,
+            status="UPLOADED",
         )
 
         db.add(resume)
         db.commit()
         db.refresh(resume)
 
-        return {
-            "message": "Resume uploaded and parsed successfully",
-            "resume_id": resume.id,
-            "filename": resume.original_filename,
-            "status": resume.status,
-            "text_length": len(resume_text),
-        }
-
     except HTTPException:
         raise
 
-    except Exception as error:
+    except Exception as exc:
         db.rollback()
-
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        file_path.unlink(missing_ok=True)
 
         raise HTTPException(
-            status_code=500,
-            detail=f"Resume processing failed: {str(error)}"
+            status_code=400,
+            detail=f"Resume processing failed: {str(exc)}",
         )
 
+    return {
+        "message": "Resume uploaded and processed successfully",
+        "resume_id": resume.id,
+        "original_filename": resume.original_filename,
+        "stored_filename": resume.stored_filename,
+        "status": resume.status,
+        "extracted_text_length": len(extracted_text),
+    }
 
-# ---------------------------------------------------------
-# GET MY RESUMES
-# ---------------------------------------------------------
 
 @router.get("/my-resumes")
 def get_my_resumes(
-    candidate: CandidateProfile = Depends(
-        get_current_candidate
-    ),
-    db: Session = Depends(get_db)
+    candidate: CandidateProfile = Depends(get_current_candidate),
+    db: Session = Depends(get_db),
 ):
     resumes = (
         db.query(Resume)
-        .filter(
-            Resume.candidate_id == candidate.id
-        )
-        .order_by(
-            Resume.uploaded_at.desc()
-        )
+        .filter(Resume.candidate_id == candidate.id)
+        .order_by(Resume.uploaded_at.desc())
         .all()
     )
 
+    return [
+        {
+            "id": resume.id,
+            "original_filename": resume.original_filename,
+            "stored_filename": resume.stored_filename,
+            "status": resume.status,
+            "uploaded_at": resume.uploaded_at,
+            "extracted_text_length": len(resume.extracted_text or ""),
+        }
+        for resume in resumes
+    ]
+
+
+@router.get("/{resume_id}/parse")
+def parse_uploaded_resume(
+    resume_id: int,
+    candidate: CandidateProfile = Depends(get_current_candidate),
+    db: Session = Depends(get_db),
+):
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.id == resume_id,
+            Resume.candidate_id == candidate.id,
+        )
+        .first()
+    )
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found",
+        )
+
+    if not resume.extracted_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume text has not been extracted",
+        )
+
+    parsed_resume = parse_resume(resume.extracted_text)
+
     return {
-        "total": len(resumes),
-        "resumes": [
-            {
-                "id": resume.id,
-                "filename": resume.original_filename,
-                "status": resume.status,
-                "uploaded_at": resume.uploaded_at,
-            }
-            for resume in resumes
-        ],
+        "message": "Resume parsed successfully",
+        "resume_id": resume.id,
+        "parsed_resume": parsed_resume,
     }
