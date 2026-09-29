@@ -4,170 +4,190 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-
+import HiringPipeline from "./pages/HiringPipeline";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/protectedroute";
 
 import Home from "./pages/Home";
 import Login from "./pages/login";
+import CandidateRegister from "./pages/CandidateRegister";
+
 import BrowseJobs from "./pages/BrowseJobs";
+import JobDetails from "./pages/JobDetails";
+
+import EmployerDashboard from "./pages/EmployerDashboard";
+import EmployerApplicants from "./pages/EmployerApplicants";
+import EmployerApplicantDetails from "./pages/EmployerApplicantDetails";
+
+import CandidateDashboard from "./pages/CandidateDashboard";
+import CareerFit from "./pages/CareerFit";
+import SkillGap from "./pages/SkillGap";
+
 import Dashboard from "./pages/Dashboard";
 import UploadResume from "./pages/uploadResume";
 import UploadJob from "./pages/uploadjob";
 import Candidates from "./pages/candidates";
 import Ranking from "./pages/Ranking";
 import CandidateDetails from "./pages/candidatedetails";
-import JobDetails from "./pages/JobDetails";
+
+
+import AdminDashboard from "./pages/AdminDashboard";
+import Notifications from "./pages/Notifications";
 function Layout() {
   const location = useLocation();
 
-  const publicPages = [
-    "/",
-    "/login",
-    "/register",
-    "/jobs",
-    "/companies",
-    "/career-fit",
-    "/employer",
-  ];
+  const path = location.pathname;
 
-  const showSidebar = !publicPages.includes(location.pathname);
+  const publicPage =
+    path === "/" ||
+    path === "/login" ||
+    path === "/register" ||
+    path === "/companies" ||
+    path === "/career-fit" ||
+    path === "/employer" ||
+    path === "/employer/applicants" ||
+    path.startsWith("/employer/applicants/") ||
+    path === "/candidate-dashboard" ||
+    path === "/jobs" ||
+    path === "/employer/pipeline" ||
+    path.startsWith("/jobs/");
+
+  const showSidebar = !publicPage;
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className="app-layout">
 
       {showSidebar && <Sidebar />}
 
-      <div
-        style={{
-          marginLeft: showSidebar ? "250px" : "0",
-          width: "100%",
-          minHeight: "100vh",
-        }}
+      <main
+        className={
+          showSidebar
+            ? "main-content"
+            : "full-content"
+        }
       >
 
         <Routes>
 
-  {/* ================= PUBLIC ================= */}
+          <Route
+            path="/"
+            element={<Home />}
+          />
 
-  <Route path="/" element={<Home />} />
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
-  <Route
-    path="/login"
-    element={<Login />}
-  />
+          <Route
+            path="/register"
+            element={<CandidateRegister />}
+          />
 
-  <Route
-    path="/register"
-    element={
-      <div style={{ padding: "50px" }}>
-        Registration page coming next.
-      </div>
-    }
-  />
+          <Route
+            path="/jobs"
+            element={<BrowseJobs />}
+          />
 
-  {/* Browse Jobs */}
-  <Route
-    path="/jobs"
-    element={<BrowseJobs />}
-  />
+          <Route
+            path="/jobs/:id"
+            element={<JobDetails />}
+          />
 
-  {/* Job Details */}
-  <Route
-    path="/jobs/:id"
-    element={<JobDetails />}
-  />
+          <Route
+            path="/companies"
+            element={
+              <div style={{ padding: "40px" }}>
+                Companies page coming soon.
+              </div>
+            }
+          />
 
-  <Route
-    path="/companies"
-    element={
-      <div style={{ padding: "50px" }}>
-        Companies page coming next.
-      </div>
-    }
-  />
+          <Route
+            path="/career-fit"
+            element={<CareerFit />}
+          />
 
-  <Route
-    path="/career-fit"
-    element={
-      <div style={{ padding: "50px" }}>
-        Career Intelligence page coming next.
-      </div>
-    }
-  />
+          <Route
+            path="/employer"
+            element={<EmployerDashboard />}
+          />
 
-  <Route
-    path="/employer"
-    element={
-      <div style={{ padding: "50px" }}>
-        Employer platform coming next.
-      </div>
-    }
-  />
+          <Route
+            path="/employer/applicants"
+            element={<EmployerApplicants />}
+          />
+<Route
+  path="/employer/pipeline"
+  element={<HiringPipeline />}
+/>
 
-  {/* ================= PROTECTED ================= */}
+          <Route
+            path="/employer/applicants/:id"
+            element={<EmployerApplicantDetails />}
+          />
 
-  <Route
-    path="/dashboard"
-    element={
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    }
-  />
+          <Route
+            path="/candidate-dashboard"
+            element={<CandidateDashboard />}
+          />
 
-  <Route
-    path="/upload-resume"
-    element={
-      <ProtectedRoute>
-        <UploadResume />
-      </ProtectedRoute>
-    }
-  />
+          <Route path="/dashboard" element={<AdminDashboard />} />
+            <Route path="/notifications" element={<Notifications />} />
 
-  <Route
-    path="/upload-job"
-    element={
-      <ProtectedRoute>
-        <UploadJob />
-      </ProtectedRoute>
-    }
-  />
+          <Route
+            path="/upload-resume"
+            element={
+              <ProtectedRoute>
+                <UploadResume />
+              </ProtectedRoute>
+            }
+          />
 
-  <Route
-    path="/candidates"
-    element={
-      <ProtectedRoute>
-        <Candidates />
-      </ProtectedRoute>
-    }
-  />
+          <Route
+            path="/upload-job"
+            element={
+              <ProtectedRoute>
+                <UploadJob />
+              </ProtectedRoute>
+            }
+          />
 
-  <Route
-    path="/ranking"
-    element={
-      <ProtectedRoute>
-        <Ranking />
-      </ProtectedRoute>
-    }
-  />
+          <Route
+            path="/candidates"
+            element={
+              <ProtectedRoute>
+                <Candidates />
+              </ProtectedRoute>
+            }
+          />
 
-  <Route
-    path="/candidate/:id"
-    element={
-      <ProtectedRoute>
-        <CandidateDetails />
-      </ProtectedRoute>
-    }
-  />
+          <Route
+            path="/ranking"
+            element={
+              <ProtectedRoute>
+                <Ranking />
+              </ProtectedRoute>
+            }
+          />
 
-</Routes>
+          <Route
+            path="/candidate/:id"
+            element={
+              <ProtectedRoute>
+                <CandidateDetails />
+              </ProtectedRoute>
+            }
+          />
 
-      </div>
+        </Routes>
+
+      </main>
 
     </div>
   );
 }
+
 
 function App() {
   return (
@@ -176,5 +196,6 @@ function App() {
     </BrowserRouter>
   );
 }
+
 
 export default App;

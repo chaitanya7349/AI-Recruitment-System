@@ -1,157 +1,214 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 function UploadResume() {
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
-  const [candidate, setCandidate] = useState(null);
+  const navigate = useNavigate();
 
-  const uploadResume = async () => {
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+
+    setFile(selectedFile || null);
+    setMessage("");
+    setError("");
+  };
+
+  const uploadResume = async (event) => {
+    event.preventDefault();
+
     if (!file) {
-      alert("Please select a resume.");
+      setError("Please select a PDF or DOCX resume.");
+      return;
+    }
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only PDF and DOCX files are supported.");
       return;
     }
 
     const formData = new FormData();
+
     formData.append("file", file);
 
     try {
-      const response = await API.post("/upload-resume", formData);
+      setUploading(true);
+      setMessage("");
+      setError("");
 
-console.log(response.data);
+      const response = await API.post(
+        "/upload-resume",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-setMessage(response.data.message);
-setCandidate(response.data.candidate);
-    } catch (error) {
-      console.log(error);
-      setMessage("Upload Failed");
+      setMessage(
+        response.data.message ||
+        "Resume uploaded successfully."
+      );
+
+    } catch (err) {
+      console.error(err);
+
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
+
+      setError(
+        err.response?.data?.detail ||
+        "Unable to upload resume."
+      );
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-  <div
-    style={{
-      background: "#f4f6f9",
-      minHeight: "100vh",
-      padding: "40px",
-      fontFamily: "Arial",
-    }}
-  >
     <div
       style={{
-        maxWidth: "800px",
-        margin: "0 auto",
-        background: "#fff",
-        padding: "40px",
-        borderRadius: "15px",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+        minHeight: "100vh",
+        background: "#f6f7fb",
+        padding: "50px",
       }}
     >
-      <h1
+
+      <div
         style={{
-          textAlign: "center",
-          marginBottom: "30px",
+          maxWidth: "700px",
+          margin: "0 auto",
+          background: "white",
+          padding: "35px",
+          borderRadius: "18px",
+          border: "1px solid #e5e7ed",
         }}
       >
-        Upload Resume
-      </h1>
-
-      <div style={{ textAlign: "center" }}>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
-
-        <br />
-        <br />
 
         <button
-          onClick={uploadResume}
+          onClick={() =>
+            navigate("/candidate-dashboard")
+          }
           style={{
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            padding: "12px 25px",
-            borderRadius: "8px",
+            border: 0,
+            background: "transparent",
+            color: "#6258e8",
+            fontWeight: 700,
             cursor: "pointer",
-            fontSize: "16px",
+            marginBottom: "25px",
           }}
         >
-          Upload Resume
+          ← Back to Dashboard
         </button>
 
-        <h3
-          style={{
-            color: message.includes("success") ? "green" : "red",
-            marginTop: "20px",
-          }}
-        >
-          {message}
-        </h3>
-      </div>
+        <h1>Upload Resume</h1>
 
-      {candidate && (
-        <div
-          style={{
-            marginTop: "40px",
-            borderTop: "1px solid #ddd",
-            paddingTop: "30px",
-          }}
-        >
-          <h2 style={{ textAlign: "center" }}>
-            Candidate Details
-          </h2>
+        <p style={{ color: "#697386" }}>
+          Upload your resume to enable resume parsing
+          and AI-powered career analysis.
+        </p>
 
-          <p>
-            <strong>Name:</strong> {candidate.name}
-          </p>
-
-          <p>
-            <strong>Email:</strong> {candidate.email}
-          </p>
-
-          <p>
-            <strong>Phone:</strong> {candidate.phone}
-          </p>
-
-          <h3>Skills</h3>
+        <form onSubmit={uploadResume}>
 
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "10px",
+              marginTop: "30px",
+              border: "2px dashed #dfe2e9",
+              borderRadius: "14px",
+              padding: "45px 25px",
+              textAlign: "center",
             }}
           >
-            {candidate.skills.map((skill, index) => (
-              <span
-                key={index}
+
+            <input
+              type="file"
+              accept=".pdf,.docx"
+              onChange={handleFileChange}
+            />
+
+            {file && (
+              <p
                 style={{
-                  background: "#2563eb",
-                  color: "white",
-                  padding: "8px 15px",
-                  borderRadius: "20px",
+                  marginTop: "15px",
+                  color: "#4d5668",
                 }}
               >
-                {skill}
-              </span>
-            ))}
+                Selected: <strong>{file.name}</strong>
+              </p>
+            )}
+
           </div>
 
-          <h3 style={{ marginTop: "30px" }}>
-            Education
-          </h3>
+          {error && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "13px",
+                borderRadius: "9px",
+                background: "#fff0f0",
+                color: "#c62828",
+              }}
+            >
+              {error}
+            </div>
+          )}
 
-          <ul>
-            {candidate.education.map((edu, index) => (
-              <li key={index}>{edu}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+          {message && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "13px",
+                borderRadius: "9px",
+                background: "#e8f8ef",
+                color: "#18794e",
+              }}
+            >
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={uploading}
+            style={{
+              marginTop: "25px",
+              border: 0,
+              background: "#6258e8",
+              color: "white",
+              padding: "13px 22px",
+              borderRadius: "10px",
+              fontWeight: 800,
+              cursor: uploading
+                ? "not-allowed"
+                : "pointer",
+              opacity: uploading ? 0.6 : 1,
+            }}
+          >
+            {uploading
+              ? "Uploading..."
+              : "Upload Resume"}
+          </button>
+
+        </form>
+
+      </div>
+
     </div>
-  </div>
-);
+  );
 }
 
 export default UploadResume;

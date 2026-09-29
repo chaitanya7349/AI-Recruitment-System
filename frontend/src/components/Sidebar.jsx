@@ -4,21 +4,64 @@ function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const user = JSON.parse(
+    localStorage.getItem("user") || "null"
+  );
+
   const logout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    localStorage.removeItem("user");
+
+    navigate("/login", {
+      replace: true,
+    });
   };
 
-  const menu = [
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Upload Resume", path: "/upload-resume" },
-    { name: "Upload Job", path: "/upload-job" },
-    { name: "Candidates", path: "/candidates" },
-    { name: "Ranking", path: "/ranking" },
-  ];
+  /*
+   * The old recruiter navigation has been removed.
+   *
+   * The main application now has separate experiences:
+   *
+   * JOB SEEKER
+   *   Candidate Dashboard
+   *   Browse Jobs
+   *   My Applications
+   *   Career Fit
+   *
+   * EMPLOYER
+   *   Employer Dashboard
+   *   Jobs
+   *   Applicants
+   *
+   * ADMIN
+   *   Dashboard
+   *
+   * Employer and candidate pages normally do not display
+   * this sidebar because App.jsx treats those pages as
+   * full application pages.
+   */
+
+  const menu =
+    user?.role === "ADMIN"
+      ? [
+          {
+            name: "Admin Dashboard",
+            path: "/dashboard",
+          },
+        ]
+      : [
+          {
+            name: "Home",
+            path: "/",
+          },
+          {
+            name: "Browse Jobs",
+            path: "/jobs",
+          },
+        ];
 
   return (
-    <div
+    <aside
       style={{
         width: "250px",
         height: "100vh",
@@ -30,39 +73,107 @@ function Sidebar() {
         top: 0,
         display: "flex",
         flexDirection: "column",
+        boxSizing: "border-box",
+        zIndex: 1000,
       }}
     >
-      <h2
+
+      {/* BRAND */}
+
+      <div
         style={{
           textAlign: "center",
           marginBottom: "40px",
         }}
       >
-        AI Recruitment
-      </h2>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "22px",
+          }}
+        >
+          AI Recruitment
+        </h2>
 
-      <div style={{ flex: 1 }}>
-        {menu.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            style={{
-              display: "block",
-              padding: "15px",
-              marginBottom: "10px",
-              textDecoration: "none",
-              color: "white",
-              borderRadius: "8px",
-              background:
-                location.pathname === item.path
+        <span
+          style={{
+            display: "block",
+            marginTop: "6px",
+            fontSize: "11px",
+            opacity: 0.7,
+            letterSpacing: "1px",
+          }}
+        >
+          INTELLIGENCE PLATFORM
+        </span>
+      </div>
+
+      {/* NAVIGATION */}
+
+      <nav
+        style={{
+          flex: 1,
+        }}
+      >
+        {menu.map((item) => {
+          const active =
+            location.pathname === item.path;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: "block",
+                padding: "15px",
+                marginBottom: "10px",
+                textDecoration: "none",
+                color: "white",
+                borderRadius: "8px",
+                background: active
                   ? "#2563eb"
                   : "transparent",
+                transition: "background 0.2s ease",
+              }}
+            >
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* CURRENT USER */}
+
+      {user && (
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.15)",
+            paddingTop: "15px",
+            marginBottom: "15px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: "600",
             }}
           >
-            {item.name}
-          </Link>
-        ))}
-      </div>
+            {user.name}
+          </div>
+
+          <div
+            style={{
+              marginTop: "4px",
+              fontSize: "11px",
+              opacity: 0.7,
+            }}
+          >
+            {user.role}
+          </div>
+        </div>
+      )}
+
+      {/* LOGOUT */}
 
       <button
         onClick={logout}
@@ -75,12 +186,13 @@ function Sidebar() {
           borderRadius: "8px",
           cursor: "pointer",
           fontSize: "16px",
-          marginBottom: "40px",
+          marginBottom: "10px",
         }}
       >
         Logout
       </button>
-    </div>
+
+    </aside>
   );
 }
 

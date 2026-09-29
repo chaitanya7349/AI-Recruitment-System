@@ -1,0 +1,285 @@
+.talent-pool-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 28px 70px;
+}
+
+.talent-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.talent-label {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.talent-header h1 {
+  margin: 6px 0 10px;
+  color: #111827;
+  font-size: 36px;
+}
+
+.talent-header p {
+  max-width: 720px;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.talent-count {
+  min-width: 145px;
+  padding: 18px;
+  border-radius: 15px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.talent-count strong,
+.talent-count span {
+  display: block;
+}
+
+.talent-count strong {
+  font-size: 32px;
+  color: #2563eb;
+}
+
+.talent-count span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.talent-error {
+  margin-bottom: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.talent-empty,
+.talent-loading {
+  padding: 60px 25px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+}
+
+.talent-empty-icon {
+  width: 55px;
+  height: 55px;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.talent-empty h2 {
+  margin-bottom: 8px;
+}
+
+.talent-empty p {
+  color: #64748b;
+  margin-bottom: 22px;
+}
+
+.talent-empty button,
+.talent-view-button,
+.talent-remove-button {
+  padding: 11px 16px;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.talent-empty button,
+.talent-view-button {
+  border: none;
+  background: #2563eb;
+  color: #fff;
+}
+
+.talent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.talent-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 17px;
+  padding: 23px;
+  box-shadow: 0 7px 22px rgba(15, 23, 42, .04);
+}
+
+.talent-main {
+  display: flex;
+  gap: 15px;
+}
+
+.talent-avatar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 19px;
+}
+
+.talent-info h2 {
+  margin: 0;
+  color: #111827;
+}
+
+.talent-info p {
+  margin: 4px 0;
+  color: #64748b;
+}
+
+.talent-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.talent-intelligence {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.talent-score,
+.talent-source {
+  padding: 15px;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.talent-score span,
+.talent-score small,
+.talent-source span,
+.talent-source strong {
+  display: block;
+}
+
+.talent-score span,
+.talent-source span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.talent-score strong {
+  display: block;
+  margin: 4px 0;
+  font-size: 26px;
+  color: #2563eb;
+}
+
+.talent-score small {
+  color: #475569;
+}
+
+.talent-source strong {
+  margin-top: 5px;
+  color: #334155;
+}
+
+.talent-skills {
+  margin-top: 17px;
+}
+
+.talent-skills > strong,
+.talent-notes > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.talent-skills div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.talent-skills span {
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.talent-notes {
+  margin-top: 17px;
+  padding: 13px;
+  border-radius: 10px;
+  background: #fff7ed;
+}
+
+.talent-notes p {
+  margin: 0;
+  color: #7c2d12;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.talent-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.talent-remove-button {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+}
+
+@media (max-width: 700px) {
+  .talent-header {
+    flex-direction: column;
+  }
+
+  .talent-count {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .talent-intelligence {
+    grid-template-columns: 1fr;
+  }
+
+  .talent-actions {
+    flex-direction: column;
+  }
+
+  .talent-view-button,
+  .talent-remove-button {
+    width: 100%;
+  }
+}

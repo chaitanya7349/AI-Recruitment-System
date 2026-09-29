@@ -1,0 +1,110 @@
+.candidate-register-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.candidate-register-card {
+  width: 100%;
+  max-width: 470px;
+  background: white;
+  border: 1px solid #e5e7ed;
+  border-radius: 20px;
+  padding: 38px;
+  box-shadow: 0 15px 45px rgba(20, 25, 40, 0.07);
+}
+
+.candidate-register-brand {
+  color: #6258e8;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 25px;
+}
+
+.candidate-register-card h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.candidate-register-card p {
+  color: #70798a;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.candidate-register-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.candidate-register-card label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.candidate-register-card input {
+  padding: 13px;
+  border: 1px solid #dfe2e9;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  outline: none;
+}
+
+.candidate-register-card input:focus {
+  border-color: #6258e8;
+  box-shadow: 0 0 0 3px rgba(98, 88, 232, 0.1);
+}
+
+.candidate-register-card form button {
+  border: 0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #6258e8;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.candidate-register-card form button:hover {
+  background: #5148d4;
+}
+
+.candidate-register-card form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-error,
+.register-success {
+  padding: 12px;
+  border-radius: 9px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.register-error {
+  background: #fff0f0;
+  color: #c62828;
+}
+
+.register-success {
+  background: #e9f8ef;
+  color: #18794e;
+}
+
+.back-login {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #6258e8;
+  font-weight: 700;
+  margin-top: 22px;
+  cursor: pointer;
+}

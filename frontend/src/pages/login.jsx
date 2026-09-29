@@ -48,13 +48,14 @@ function Login() {
 
       // Redirect according to the user's role
       if (user.role === "EMPLOYER_USER") {
-        navigate("/employer");
-      } else if (user.role === "ADMIN") {
-        navigate("/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
-
+  navigate("/employer");
+} else if (user.role === "JOB_SEEKER") {
+  navigate("/candidate-dashboard");
+} else if (user.role === "ADMIN") {
+  navigate("/dashboard");
+} else {
+  navigate("/dashboard");
+}
     } catch (error) {
       console.error("Login error:", error);
 

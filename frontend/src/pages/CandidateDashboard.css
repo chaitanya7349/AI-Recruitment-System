@@ -1,0 +1,504 @@
+.candidate-dashboard {
+  min-height: 100vh;
+  background: #f6f7fb;
+  padding: 42px 48px 70px;
+  color: #172033;
+}
+
+.candidate-header {
+  max-width: 1250px;
+  margin: 0 auto 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.candidate-eyebrow,
+.candidate-section-label {
+  display: block;
+  color: #6258e8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.candidate-header h1 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+
+.candidate-header p {
+  color: #697386;
+  margin: 8px 0 0;
+}
+
+.candidate-logout {
+  border: 1px solid #dfe2e9;
+  background: white;
+  padding: 11px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.candidate-success,
+.candidate-error {
+  max-width: 1250px;
+  margin: 0 auto 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.candidate-success {
+  background: #e8f8ef;
+  color: #18794e;
+}
+
+.candidate-error {
+  background: #fff0f0;
+  color: #c62828;
+}
+
+.candidate-stats {
+  max-width: 1250px;
+  margin: 0 auto 25px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.candidate-stat-card,
+.candidate-card {
+  background: white;
+  border: 1px solid #e6e8ef;
+  border-radius: 17px;
+  box-shadow: 0 7px 25px rgba(20, 25, 40, 0.035);
+}
+
+.candidate-stat-card {
+  padding: 24px;
+}
+
+.candidate-stat-card span {
+  color: #747d8e;
+  font-size: 14px;
+}
+
+.candidate-stat-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 27px;
+}
+
+.candidate-grid {
+  max-width: 1250px;
+  margin: 0 auto 25px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.candidate-card {
+  padding: 28px;
+}
+
+.candidate-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.candidate-card-heading h2,
+.candidate-card h2 {
+  margin: 0;
+  font-size: 23px;
+}
+
+.candidate-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.candidate-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.candidate-profile-form > div,
+.candidate-form-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.candidate-profile-form label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.candidate-profile-form input,
+.candidate-profile-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #dfe2e9;
+  border-radius: 10px;
+  padding: 12px 13px;
+  font: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.candidate-profile-form input:focus,
+.candidate-profile-form textarea:focus {
+  border-color: #6258e8;
+  box-shadow: 0 0 0 3px rgba(98, 88, 232, 0.1);
+}
+
+.candidate-profile-form input:disabled {
+  background: #f4f5f8;
+  color: #747d8e;
+}
+
+.candidate-save-button,
+.career-card button,
+.resume-card button,
+.empty-applications button,
+.browse-jobs-button {
+  border: 0;
+  background: #6258e8;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.candidate-save-button {
+  align-self: flex-start;
+}
+
+.candidate-save-button:hover,
+.career-card button:hover,
+.resume-card button:hover,
+.empty-applications button:hover {
+  background: #5148d4;
+}
+
+.candidate-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.career-card {
+  background: #171b2e;
+  color: white;
+}
+
+.career-card .candidate-section-label {
+  color: #a7a1ff;
+}
+
+.career-card p,
+.resume-card p {
+  color: #747d8e;
+  line-height: 1.6;
+  margin: 14px 0 20px;
+}
+
+.career-card p {
+  color: #b9bfce;
+}
+
+.career-card button {
+  background: white;
+  color: #3831a8;
+}
+
+.resume-card {
+  background: white;
+}
+
+.applications-card {
+  max-width: 1194px;
+  margin: 0 auto;
+}
+
+.browse-jobs-button {
+  background: white;
+  color: #6258e8;
+  border: 1px solid #dfe2e9;
+}
+
+.application-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.application-item {
+  padding: 19px 0;
+  border-top: 1px solid #eceef3;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.application-item h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+.application-item p {
+  margin: 0 0 6px;
+  color: #525c6e;
+  font-weight: 600;
+}
+
+.application-item > div:first-child span {
+  color: #7b8494;
+  font-size: 13px;
+}
+
+.application-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.application-status span {
+  background: #e8f8ef;
+  color: #18794e;
+  border-radius: 20px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.application-status small {
+  color: #858d9c;
+}
+
+.empty-applications {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-applications h3 {
+  margin: 0 0 8px;
+}
+
+.empty-applications p {
+  color: #747d8e;
+  margin-bottom: 20px;
+}
+
+.candidate-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #687184;
+}
+
+@media (max-width: 900px) {
+  .candidate-dashboard {
+    padding: 25px 18px 50px;
+  }
+
+  .candidate-header {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .candidate-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .application-item {
+    flex-direction: column;
+  }
+
+  .application-status {
+    align-items: flex-start;
+  }
+}
+.resume-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.resume-item {
+  padding: 12px;
+  border: 1px solid #e5e7ed;
+  border-radius: 10px;
+  background: #f8f9fc;
+}
+
+.resume-item strong {
+  display: block;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.resume-item small {
+  display: block;
+  margin-top: 4px;
+  color: #18794e;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   APPLICATION STATUS HISTORY
+   ========================================================= */
+
+.application-history {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.history-heading {
+  margin-bottom: 16px;
+}
+
+.history-heading > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-heading span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.history-heading strong {
+  font-size: 13px;
+  color: #334155;
+}
+
+.history-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.history-list::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.history-item {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.history-item:last-child {
+  padding-bottom: 0;
+}
+
+.history-dot {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+}
+
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-title-row strong {
+  color: #0f172a;
+}
+
+.history-title-row span {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.history-content > small {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+}
+
+.history-feedback {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.history-feedback span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.history-feedback p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.55;
+}
+
+@media (max-width: 650px) {
+  .history-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .history-title-row span {
+    white-space: normal;
+  }
+}
