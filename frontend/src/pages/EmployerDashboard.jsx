@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import "./EmployerDashboard.css";
+import HiringPipeline from "./HiringPipeline";
 
 function EmployerDashboard() {
   const navigate = useNavigate();
@@ -718,6 +719,14 @@ function EmployerDashboard() {
 
         </section>
       )}
+
+      {/* ======================================================
+          HIRING PIPELINE
+      ====================================================== */}
+
+      <section className="embedded-pipeline-section">
+        <HiringPipeline />
+      </section>
 
       {/* ======================================================
           MY JOBS

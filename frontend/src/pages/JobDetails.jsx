@@ -80,8 +80,9 @@ function JobDetails() {
           API.get("/candidate/applications"),
         ]);
 
-        const resumeList =
-          resumesResponse.data.resumes || [];
+        const resumeList = Array.isArray(resumesResponse.data)
+          ? resumesResponse.data
+          : (resumesResponse.data.resumes || []);
 
         const applicationList =
           applicationsResponse.data.applications || [];

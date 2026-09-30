@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import "./SkillGap.css";
 
 export default function SkillGap() {
-  const [searchParams] = useSearchParams();
+  const { jobId } = useParams();
   const navigate = useNavigate();
-
-  const jobId = searchParams.get("job");
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +24,35 @@ export default function SkillGap() {
   const loadSkillGap = async () => {
     try {
       const response = await API.get(`/candidate/jobs/${jobId}/fit`);
-      setData(response.data);
+      const result = response.data;
+
+      const fit = result.fit || {};
+
+      const actions = (fit.recommendations || []).map(
+        (recommendation, index) => ({
+          skill: fit.missing_skills?.[index] || "Skill Development",
+          priority: index === 0 ? "HIGH" : "MEDIUM",
+          action: recommendation,
+          project: `Build a practical project using ${
+            fit.missing_skills?.[index] || "this skill"
+          }.`,
+        })
+      );
+
+      setData({
+        job_id: result.job_id,
+        job_title: result.job_title,
+        career_fit_score: fit.score ?? 0,
+        readiness: fit.readiness || "Needs Improvement",
+        matching_skills: fit.matching_skills || [],
+        missing_skills: fit.missing_skills || [],
+        actions,
+        skill_gap_count: (fit.missing_skills || []).length,
+        message:
+          fit.missing_skills?.length > 0
+            ? "These are the main skills you can develop to improve your fit for this role."
+            : "Your detected skills currently cover the requirements for this role.",
+      });
     } catch (err) {
       setError(
         err.response?.data?.detail ||

@@ -123,7 +123,9 @@ function CandidateDashboard() {
       setJobs(jobsResponse.data || []);
 
       setResumes(
-        resumesResponse.data.resumes || []
+        Array.isArray(resumesResponse.data)
+          ? resumesResponse.data
+          : (resumesResponse.data.resumes || [])
       );
 
       setError("");

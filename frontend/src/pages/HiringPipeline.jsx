@@ -45,9 +45,11 @@ function HiringPipeline() {
         "/employer/applications"
       );
 
-      setApplications(
-        response.data.applications || []
-      );
+      const applicationList = Array.isArray(response.data)
+        ? response.data
+        : (response.data.applications || []);
+
+      setApplications(applicationList);
     } catch (err) {
       console.error(err);
 

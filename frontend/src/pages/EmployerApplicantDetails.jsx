@@ -59,10 +59,7 @@ function EmployerApplicantDetails() {
 
       setData((current) => ({
         ...current,
-        application: {
-          ...current.application,
-          status,
-        },
+        status,
       }));
     } catch (err) {
       alert(
@@ -103,14 +100,18 @@ function EmployerApplicantDetails() {
   }
 
   const {
-    application,
+    application_id,
     job,
     candidate,
     resume,
     intelligence,
+    status,
+    applied_at,
   } = data;
 
-  const score = intelligence?.score;
+  const score =
+    intelligence?.career_fit_score ??
+    intelligence?.score;
 
   return (
     <div className="applicant-intelligence-page">
@@ -172,12 +173,12 @@ function EmployerApplicantDetails() {
           <p>
             Applied{" "}
             {new Date(
-              application.applied_at
+              applied_at
             ).toLocaleDateString()}
           </p>
 
           <select
-            value={application.status}
+            value={status}
             onChange={(event) =>
               updateStatus(event.target.value)
             }
@@ -314,7 +315,7 @@ function EmployerApplicantDetails() {
           {resume ? (
             <>
               <div className="resume-name">
-                {resume.filename}
+                {resume.original_filename}
               </div>
 
               <div className="resume-status">

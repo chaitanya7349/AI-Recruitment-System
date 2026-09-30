@@ -68,7 +68,7 @@ function CareerFit() {
     );
   }
 
-  const fit = result.career_fit;
+  const fit = result.fit;
 
   return (
     <div className="career-fit-page">
@@ -93,8 +93,7 @@ function CareerFit() {
         </h1>
 
         <p>
-          {result.job.title} ·{" "}
-          {result.job.company_name}
+          {result.job_title || "Selected Job"}
         </p>
 
       </div>

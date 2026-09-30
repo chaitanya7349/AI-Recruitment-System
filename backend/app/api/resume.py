@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from pathlib import Path
 
@@ -138,6 +139,31 @@ async def upload_resume(
             status_code=400,
             detail="Invalid DOCX file",
         )
+
+    uploaded_hash = hashlib.sha256(content).hexdigest()
+
+    existing_resumes = (
+        db.query(Resume)
+        .filter(Resume.candidate_id == candidate.id)
+        .all()
+    )
+
+    for existing_resume in existing_resumes:
+        existing_path = Path(existing_resume.file_path)
+
+        if existing_path.exists():
+            existing_content = existing_path.read_bytes()
+            existing_hash = hashlib.sha256(existing_content).hexdigest()
+
+            if existing_hash == uploaded_hash:
+                return {
+                    "id": existing_resume.id,
+                    "original_filename": existing_resume.original_filename,
+                    "stored_filename": existing_resume.stored_filename,
+                    "status": existing_resume.status,
+                    "uploaded_at": existing_resume.uploaded_at,
+                    "message": "This resume has already been uploaded.",
+                }
 
     safe_filename = f"{uuid.uuid4().hex}{extension}"
     file_path = UPLOAD_DIR / safe_filename

@@ -28,10 +28,13 @@ import UploadResume from "./pages/uploadResume";
 import UploadJob from "./pages/uploadjob";
 import Candidates from "./pages/candidates";
 import Ranking from "./pages/Ranking";
-import CandidateDetails from "./pages/candidatedetails";
-
-
+import TalentPool from "./pages/TalentPool";
 import AdminDashboard from "./pages/AdminDashboard";
+import CandidateDetails from "./pages/candidatedetails";
+import Companies from "./pages/Companies";
+import CompanyDetails from "./pages/CompanyDetails";
+
+
 import Notifications from "./pages/Notifications";
 function Layout() {
   const location = useLocation();
@@ -43,6 +46,7 @@ function Layout() {
     path === "/login" ||
     path === "/register" ||
     path === "/companies" ||
+    path.startsWith("/companies/") ||
     path === "/career-fit" ||
     path === "/employer" ||
     path === "/employer/applicants" ||
@@ -96,11 +100,12 @@ function Layout() {
 
           <Route
             path="/companies"
-            element={
-              <div style={{ padding: "40px" }}>
-                Companies page coming soon.
-              </div>
-            }
+            element={<Companies />}
+          />
+
+          <Route
+            path="/companies/:id"
+            element={<CompanyDetails />}
           />
 
           <Route
@@ -190,6 +195,24 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <Ranking />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/talent-pool"
+            element={
+              <ProtectedRoute>
+                <TalentPool />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

@@ -23,7 +23,7 @@ function BrowseJobs() {
 
       const response = await API.get("/jobs/");
 
-      setJobs(response.data.jobs || []);
+      setJobs(Array.isArray(response.data) ? response.data : (response.data.jobs || []));
     } catch (err) {
       console.error("Failed to fetch jobs:", err);
       setError(
